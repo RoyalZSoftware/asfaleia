@@ -1,11 +1,24 @@
 package packets
 
 import (
+	"fmt"
 	"github.com/royalzsoftware/asfaleia/lib"
 	"github.com/royalzsoftware/asfaleia/lib/utils"
+	"math/rand"
 	"net"
 )
 
+func generateRandomValidationMessage(size int) []byte {
+	token := make([]byte, size)
+	rand.Read(token)
+	return token
+}
+
+/*
+Type: Client-Packet
+Usage: 0;<PUB-KEY>
+Returns: 1;<HANDLE>;<ENCRYPTED-SYMMETRIC-KEY>
+*/
 type AuthPacket struct{}
 
 func (p AuthPacket) Params() int {
@@ -13,17 +26,38 @@ func (p AuthPacket) Params() int {
 }
 
 func (p AuthPacket) Handle(params []string, c net.Conn) {
-	encrypter := &utils.MockEncrypter{}
-	validationMessage := "Hello World"
-	handle := len(lib.HandleQueue)
-	answer := &AuthVerifyIdentityPacket{
-		Handle:           handle,
-		EncryptedMessage: encrypter.Encrypt(string(validationMessage)),
+	wrongUsage := &WrongUsagePacket{}
+
+	encrypter := &utils.RSAEncrypter{}
+	err, publicKey := utils.BytesToPublicKey([]byte(params[0]))
+
+	if err != nil {
+		lib.SendAnswerPacket(wrongUsage, c)
+		return
 	}
 
-	lib.HandleQueue[handle] = validationMessage
+	validationMessage := utils.EncodeInBase64(
+		generateRandomValidationMessage(10),
+	)
+	fmt.Println(string(validationMessage))
+	handle := len(lib.HandleQueue)
+	err, encryptedMessage := encrypter.Encrypt(
+		[]byte(validationMessage),
+		publicKey,
+	)
+
+	var answer lib.ResponsePacket
+	if err != nil {
+		answer = wrongUsage
+	} else {
+		answer = &AuthVerifyIdentityPacket{
+			Handle:           handle,
+			EncryptedMessage: utils.EncodeInBase64(encryptedMessage),
+		}
+		lib.HandleQueue[handle] = string(validationMessage)
+	}
+
 	lib.SendAnswerPacket(answer, c)
-	return
 }
 
 func (p AuthPacket) Identifier() int {
