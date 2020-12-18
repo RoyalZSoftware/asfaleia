@@ -52,7 +52,7 @@ func HandlePacket(packetString string, c net.Conn) error {
 	if packet == nil {
 		return errors.New("packet: Packet not found")
 	}
-	if len(params) != packet.Params() {
+	if len(params) != packet.Params() || !packet.VerifyParameters(params) {
 		return errors.New("packet: Wrong usage.")
 	}
 	packet.Handle(params, c)
