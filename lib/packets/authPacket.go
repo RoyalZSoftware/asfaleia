@@ -27,8 +27,8 @@ func (p AuthPacket) Params() int {
 
 func (p AuthPacket) VerifyParameters(params []string) bool {
 	keyValid := utils.VerifyInput(params[0], utils.RuleSet{
-		MinLength: 128,
-		MaxLength: 128,
+		MinLength: 218,
+		MaxLength: 218,
 	})
 	return keyValid
 }
