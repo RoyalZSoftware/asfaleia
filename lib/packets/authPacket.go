@@ -25,6 +25,14 @@ func (p AuthPacket) Params() int {
 	return 1
 }
 
+func (p AuthPacket) VerifyParameters(params []string) bool {
+	keyValid := utils.VerifyInput(params[0], utils.RuleSet{
+		MinLength: 128,
+		MaxLength: 128,
+	})
+	return keyValid
+}
+
 func (p AuthPacket) Handle(params []string, c net.Conn) {
 	wrongUsage := &WrongUsagePacket{}
 

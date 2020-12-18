@@ -11,6 +11,10 @@ func (p GetPacket) Params() int {
 	return 1
 }
 
+func (p GetPacket) VerifyParameters(params []string) bool {
+	return true
+}
+
 func (p GetPacket) Handle(params []string, c net.Conn) {
 	return
 }

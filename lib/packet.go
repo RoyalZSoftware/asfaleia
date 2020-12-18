@@ -21,6 +21,7 @@ type RequestPacket interface {
 	Identifier() int
 	Params() int
 	Handle(params []string, c net.Conn)
+	VerifyParameters(params []string) bool
 }
 
 func SendAnswerPacket(packet ResponsePacket, c net.Conn) {
