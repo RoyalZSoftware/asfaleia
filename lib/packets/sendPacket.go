@@ -1,7 +1,6 @@
 package packets
 
 import (
-	// "github.com/royalzsoftware/asfaleia/lib"
 	"net"
 )
 
