@@ -1,0 +1,15 @@
+on: [push, pull_request]
+name: "Library Tests"
+
+jobs:
+  test:
+    runs-on: ["ubuntu"]
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Test Code
+        run: go test ./lib/packets/...
