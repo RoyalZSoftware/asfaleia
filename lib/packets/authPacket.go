@@ -7,14 +7,10 @@ import (
 	"net"
 )
 
-func generateRandomValidationMessage(size int) []byte {
+func generateRandomEncodedValidationMessage(size int) string {
 	token := make([]byte, size)
 	rand.Read(token)
-	return token
-}
-
-func generateRandomEncodedValidationMessage(size int) string {
-	return utils.EncodeInBase64(generateRandomValidationMessage(size))
+	return utils.EncodeInBase64(token)
 }
 
 func generateFinishedValidationMessage(validationMessage string,
@@ -57,26 +53,38 @@ func (p AuthPacket) VerifyParameters(params []string) bool {
 	return keyValid
 }
 
-func (p AuthPacket) Handle(params []string, c net.Conn) {
-	validationMessage := generateRandomEncodedValidationMessage(10)
+func (p AuthPacket) TryCreateVerifyPacket(
+	validationMessage,
+	pubKey string,
+	handle int,
+) lib.ResponsePacket {
 	err, encryptedMessage := generateFinishedValidationMessage(
 		validationMessage,
-		params[0],
+		pubKey,
 	)
 	if err != nil {
-		lib.SendAnswerPacket(&WrongUsagePacket{}, c)
+		return &WrongUsagePacket{}
 	} else {
-		handle := len(lib.HandleQueue)
-		lib.HandleQueue[handle] = string(validationMessage)
-
 		answer := &AuthVerifyIdentityPacket{
 			Handle:           handle,
 			EncryptedMessage: utils.EncodeInBase64(encryptedMessage),
 		}
 
-		lib.SendAnswerPacket(answer, c)
+		return answer
 	}
 
+}
+
+func (p AuthPacket) Handle(params []string, c net.Conn) {
+
+	validationMessage := generateRandomEncodedValidationMessage(10)
+
+	responsePacket := p.TryCreateVerifyPacket(
+		validationMessage,
+		params[0],
+		len(lib.HandleQueue),
+	)
+	lib.SendAnswerPacket(responsePacket, c)
 }
 
 func (p AuthPacket) Identifier() int {
