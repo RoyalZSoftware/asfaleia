@@ -3,7 +3,7 @@ name: "Library Tests"
 
 jobs:
   test:
-    runs-on: ["ubuntu"]
+    runs-on: ubuntu-latest
     steps:
       - name: Install Go
         uses: actions/setup-go@v2
