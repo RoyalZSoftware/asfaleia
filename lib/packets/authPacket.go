@@ -7,14 +7,16 @@ import (
 	"net"
 )
 
-func generateRandomEncodedValidationMessage(size int) string {
+func generateEncodedSymmetricKey(size int) string {
 	token := make([]byte, size)
 	rand.Read(token)
 	return utils.EncodeInBase64(token)
 }
 
-func generateFinishedValidationMessage(validationMessage string,
-	pubKey string) (error, []byte) {
+func encryptSymmetricKey(
+	symmetricKey string,
+	pubKey string,
+) (error, []byte) {
 	encrypter := &utils.RSAEncrypter{}
 	err, publicKey := utils.BytesToPublicKey([]byte(pubKey))
 
@@ -22,8 +24,8 @@ func generateFinishedValidationMessage(validationMessage string,
 		return err, []byte("")
 	}
 
-	err, encryptedMessage := encrypter.Encrypt(
-		[]byte(validationMessage),
+	err, encryptedKey := encrypter.Encrypt(
+		[]byte(symmetricKey),
 		publicKey,
 	)
 
@@ -31,7 +33,7 @@ func generateFinishedValidationMessage(validationMessage string,
 		return err, []byte("")
 	}
 
-	return nil, encryptedMessage
+	return nil, encryptedKey
 }
 
 /*
@@ -54,12 +56,12 @@ func (p AuthPacket) VerifyParameters(params []string) bool {
 }
 
 func (p AuthPacket) TryCreateVerifyPacket(
-	validationMessage,
+	symmetricKey string,
 	pubKey string,
 	handle int,
 ) lib.ResponsePacket {
-	err, encryptedMessage := generateFinishedValidationMessage(
-		validationMessage,
+	err, encryptedSymmetricKey := encryptSymmetricKey(
+		symmetricKey,
 		pubKey,
 	)
 	if err != nil {
@@ -67,7 +69,7 @@ func (p AuthPacket) TryCreateVerifyPacket(
 	} else {
 		answer := &AuthVerifyIdentityPacket{
 			Handle:           handle,
-			EncryptedMessage: utils.EncodeInBase64(encryptedMessage),
+			EncryptedMessage: utils.EncodeInBase64(encryptedSymmetricKey),
 		}
 
 		return answer
@@ -77,10 +79,10 @@ func (p AuthPacket) TryCreateVerifyPacket(
 
 func (p AuthPacket) Handle(params []string, c net.Conn) {
 
-	validationMessage := generateRandomEncodedValidationMessage(10)
+	encodedSymmetricKey := generateEncodedSymmetricKey(10)
 
 	responsePacket := p.TryCreateVerifyPacket(
-		validationMessage,
+		encodedSymmetricKey,
 		params[0],
 		len(lib.HandleQueue),
 	)

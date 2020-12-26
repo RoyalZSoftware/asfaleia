@@ -20,7 +20,7 @@ func TestAuthPacketReturnsWrongUsage(t *testing.T) {
 	packet := &packets.AuthPacket{}
 
 	responsePacket := packet.TryCreateVerifyPacket(
-		"ValidationMessage",
+		"SymmetricKey",
 		"Test",
 		0,
 	)
@@ -28,7 +28,7 @@ func TestAuthPacketReturnsWrongUsage(t *testing.T) {
 	is.Equal(responsePacket.Identifier(), 102)
 }
 
-func TestAuthPacketReturnsValidationMessage(t *testing.T) {
+func TestAuthPacketReturnsEncryptedSymmetricKey(t *testing.T) {
 	is := is.New(t)
 	packet := &packets.AuthPacket{}
 
@@ -39,7 +39,7 @@ func TestAuthPacketReturnsValidationMessage(t *testing.T) {
 		"K5EeWiDj/sRVcP42KyYzGmd6ExbqaWMewIDAQAB"
 
 	responsePacket := packet.TryCreateVerifyPacket(
-		"ValidationMessage",
+		"SymmetricKey",
 		publicKey,
 		0,
 	)
